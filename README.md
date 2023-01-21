@@ -19,7 +19,7 @@ This skeleton has been prepared based on a custom fork of the fantastic `github.
 ```bash
 cd "${GOPATH}/src/your/program"
 rm -rf .git
-go install github.com/nerdlem/cobra-cli
+go install github.com/nerdlem/cobra-cli@latest
 go mod init
 ```
 
@@ -37,6 +37,7 @@ Make sure you update the license, author and copyright related entries to taste.
 
 ```bash
 cobra-cli --config cobra.toml --viper init
+go mod tidy
 ```
 
 After this step, you should have a functional application skeleton available.
