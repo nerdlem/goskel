@@ -1,0 +1,33 @@
+
+#############
+#############
+###
+### Logging configuration
+###
+#############
+#############
+[log]
+
+# Overall logging level. For normal operation, either "info", "error" or "warn"
+# should be ok.
+level = "trace"
+
+# Whether to use syslog directly for logging. protocol, dial, tag and priority
+# are used for syslog configuration
+# syslog = false
+
+# Use these settings for sending to a remote syslog server...
+# protocol = "udp"
+# dial = "localhost:514"
+
+# These settings send to a local syslog server
+# protocol = ""
+# dial = ""
+
+# tag = "arftool"
+# priority = "error"
+
+# If not using syslog, logging can be configured to use either STDERR or STDOUT,
+# with STDERR taking precedence
+# stderr = true
+# stdout = false

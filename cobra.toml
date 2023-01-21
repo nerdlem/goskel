@@ -1,0 +1,283 @@
+###########################################################################################
+###########################################################################################
+##
+## This config file requires the fork at github.com/nerdlem/cobra-cli
+##
+## This is so because the contents of the various generated files can be specified via
+## configuration.
+##
+###########################################################################################
+###########################################################################################
+
+# Configure the below accordingly.
+
+author = "Luis E. Muñoz <github@lem.click>"
+year   = "2023"
+
+# Use this to specify your license. Alternatively, you can specify your very own license.
+# license = "gpl"
+
+# The following allows for a custom license. You can also specify a specific
+# license by name.
+[license]
+header = """All Rights Reserved
+
+This is some boilerplate text to be included with your code.
+"""
+
+text = """
+
+This is some boilerplate text, to be placed mainly in the LICENSE file
+that accompanies this code. Update to suit.
+"""
+
+## There should be no need to edit anything below this line.
+
+[template]
+main = """/*
+{{ .Copyright }}
+{{ if .Legal.Header }}{{ .Legal.Header }}{{ end }}
+*/
+package main
+
+import "{{ .PkgName }}/cmd"
+
+func main() {
+	cmd.Execute()
+}
+"""
+
+root = """
+/*
+{{ .Copyright }}
+{{ if .Legal.Header }}{{ .Legal.Header }}{{ end }}
+*/
+package cmd
+
+import (
+{{- if .Viper }}
+	"fmt"{{ end }}
+	"os"
+
+	"github.com/spf13/cobra"
+{{- if .Viper }}
+    "log/syslog"
+    "strings"
+    lSyslog "github.com/sirupsen/logrus/hooks/syslog"
+	"github.com/soellman/pidfile"
+	"github.com/spf13/viper"
+  	"github.com/sirupsen/logrus"{{ end }}
+)
+
+{{ if .Viper -}}
+var cfgFile, logLevel, pidFile string
+var log *logrus.Logger
+var logger *logrus.Entry{{ end }}
+
+var verbose, debug bool
+
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
+	Use:   "{{ .AppName }}",
+	Short: "A brief description of your application",
+	Long: `A longer description that spans multiple lines and likely contains
+examples and usage of using your application. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	// Uncomment the following line if your bare application
+	// has an action associated with it:
+	// Run: func(cmd *cobra.Command, args []string) { },
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() {
+	err := rootCmd.Execute()
+	if err != nil {
+		os.Exit(1)
+	}
+}
+
+func init() {
+{{- if .Viper }}
+	cobra.OnInitialize(initConfig)
+{{ end }}
+	// Here you will define your flags and configuration settings.
+	// Cobra supports persistent flags, which, if defined here,
+	// will be global for your application.
+{{ if .Viper }}
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.{{ .AppName }}.yaml)")
+{{ else }}
+	// rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.{{ .AppName }}.yaml)")
+{{ end }}
+	// Cobra also supports local flags, which will only run
+	// when this action is called directly.
+  	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "verbose output")
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug output")
+{{ if .Viper }}
+	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "L", "error", "log level")
+	rootCmd.PersistentFlags().StringVarP(&pidFile, "pid-file", "P", "", "PID file to create")
+
+	viper.BindPFlag("log.level", rootCmd.PersistentFlags().Lookup("log-level"))
+	viper.BindPFlag("daemon.pidfile", rootCmd.PersistentFlags().Lookup("pid-file"))
+    viper.SetDefault("log.stderr", "true")
+    viper.SetDefault("log.level", "error")
+{{ end }}
+}
+
+{{ if .Viper -}}
+func getPriority(pLabel string) syslog.Priority {
+	switch pLabel {
+	case "emerg", "emergency":
+		return syslog.LOG_EMERG
+	case "alert":
+		return syslog.LOG_ALERT
+	case "crit", "critical":
+		return syslog.LOG_CRIT
+	case "err", "error":
+		return syslog.LOG_ERR
+	case "warning":
+		return syslog.LOG_WARNING
+	case "notice":
+		return syslog.LOG_NOTICE
+	case "debug":
+		return syslog.LOG_DEBUG
+	case "info", "informational":
+		return syslog.LOG_INFO
+	default:
+		log.Fatalf("invalid syslog log priority: %s", pLabel)
+	}
+	panic("unreachable")
+}
+
+func initLogging() {
+
+	if viper.GetBool("log.syslog") {
+		hook, err := lSyslog.NewSyslogHook(viper.GetString("protocol"),
+			viper.GetString("dial"),
+			getPriority(viper.GetString("log.priority")),
+			viper.GetString("log.tag"))
+
+		if err == nil {
+			logrus.AddHook(hook)
+		} else {
+			fmt.Fprintf(os.Stderr, "cannot initialize syslog loging: %s\\n", err)
+			os.Exit(1)
+		}
+
+		logrus.SetFormatter(&logrus.TextFormatter{
+			DisableColors: true,
+			FullTimestamp: false,
+		})
+
+	} else {
+		logrus.SetFormatter(&logrus.TextFormatter{
+			DisableColors: false,
+			FullTimestamp: true,
+		})
+		if viper.GetBool("log.stderr") {
+			logrus.SetOutput(os.Stderr)
+		} else {
+			logrus.SetOutput(os.Stdout)
+		}
+	}
+
+	l, err := logrus.ParseLevel(viper.GetString("log.level"))
+	if err != nil {
+		panic(fmt.Sprintf("Cannot parse log level <%s>: %s",
+			viper.GetString("log.level"), err))
+	}
+
+	logrus.SetLevel(l)
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Find home directory.
+		home, err := os.UserHomeDir()
+		cobra.CheckErr(err)
+
+		// Search config in home directory with name ".{{ .AppName }}" (without extension).
+		viper.AddConfigPath("/etc")
+		viper.AddConfigPath(home)
+		viper.SetConfigType("toml")
+		viper.AddConfigPath(".")
+		viper.SetConfigName(".{{ .AppName }}")
+	}
+
+	// If a config file is found, read it in.
+	err := viper.ReadInConfig()
+
+	viper.SetEnvPrefix("{{ .AppName }}")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_", ".", "_"))
+	viper.AutomaticEnv() // read in environment variables that match
+
+	// Try to be smart about errors
+	if err != nil {
+		_, fnfe := err.(viper.ConfigFileNotFoundError)
+		if cfgFile != "" || !fnfe {
+			panic(fmt.Errorf("invalid config file %s: %s", viper.ConfigFileUsed(), err))
+		}
+	}
+
+    initLogging()
+
+	if pidFile != "" {
+		if err := pidfile.Write(pidFile); err != nil {
+			log.WithFields(logrus.Fields{
+				"pidfile": pidFile,
+				"err":     err,
+			}).Fatal("cannot create pidfile")
+		}
+	}
+}
+{{- end }}
+"""
+
+command = """/*
+{{ .Project.Copyright }}
+{{ if .Legal.Header }}{{ .Legal.Header }}{{ end }}
+*/
+package cmd
+
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
+
+// {{ .CmdName }}Cmd represents the {{ .CmdName }} command
+var {{ .CmdName }}Cmd = &cobra.Command{
+	Use:   "{{ .CmdName }}",
+	Short: "A brief description of your command",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println("{{ .CmdName }} called")
+	},
+}
+
+func init() {
+	{{ .CmdParent }}.AddCommand({{ .CmdName }}Cmd)
+
+	// Here you will define your flags and configuration settings.
+
+	// Cobra supports Persistent Flags which will work for this command
+	// and all subcommands, e.g.:
+	// {{ .CmdName }}Cmd.PersistentFlags().String("foo", "", "A help for foo")
+
+	// Cobra supports local flags which will only run when this command
+	// is called directly, e.g.:
+	// {{ .CmdName }}Cmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+"""
