@@ -33,18 +33,9 @@ Make sure you update the license, author and copyright related entries to taste.
 
 ## Viper for configuration file management
 
-`github.com/spf13/viper` is another great library to use in your projects as it makes it easy to manage configuration files with environment variable overrides, tied to you command line flags. Personally, I tend to use Viper as much as I can, and therefore this is the command I would use to setup my application.
+`github.com/spf13/viper` is another great library to use in your projects as it makes it easy to manage configuration files with environment variable overrides, tied to you command line flags. Personally, I tend to use Viper as much as I can, which is why the shipped `cobra.toml` enables Viper usage.
 
-```bash
-cobra-cli --config cobra.toml --viper init
-go mod tidy
-```
-
-After this step, you should have a functional application skeleton available.
-
-## No Viper
-
-If for some reason you don't need or want to use Viper, just omit the `--viper` option in the invocation above.
+If for some reason you don't need or want to use Viper, just remove the option from the `cobra.yoml` file.
 
 ## Git configuration
 

@@ -11,8 +11,9 @@
 
 # Configure the below accordingly.
 
-author = "Luis E. Muñoz <github@lem.click>"
-year   = "2023"
+author   = "Luis E. Muñoz <github@lem.click>"
+year     = "2023"
+useViper = true
 
 # Use this to specify your license. Alternatively, you can specify your very own license.
 # license = "gpl"
