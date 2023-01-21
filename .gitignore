@@ -1,4 +1,6 @@
 cmd/
 LICENSE
 main.go
+go.mod
 go.sum
+

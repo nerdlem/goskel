@@ -45,3 +45,6 @@ After this step, you should have a functional application skeleton available.
 
 If for some reason you don't need or want to use Viper, just omit the `--viper` option in the invocation above.
 
+## Git configuration
+
+The shipped `.gitignore` might need editing. In particular, you might want to commit your `go.mod` and `go.sum` files.
