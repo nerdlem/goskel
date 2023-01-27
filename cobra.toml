@@ -237,6 +237,13 @@ func initConfig() {
 			}).Fatal("cannot create pidfile")
 		}
 	}
+
+	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		logrus.WithFields(logrus.Fields{
+			"file": e.Name,
+		}).Info("config file changed")
+	})
 }
 {{- end }}
 """

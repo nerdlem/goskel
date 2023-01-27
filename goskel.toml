@@ -24,7 +24,7 @@ level = "trace"
 # protocol = ""
 # dial = ""
 
-# tag = "arftool"
+# tag = "goskel"
 # priority = "error"
 
 # If not using syslog, logging can be configured to use either STDERR or STDOUT,
