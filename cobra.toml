@@ -158,7 +158,7 @@ func initLogging() {
 
 	if viper.GetBool("log.syslog") {
 		hook, err := lSyslog.NewSyslogHook(viper.GetString("protocol"),
-			viper.GetString("dial"),
+			viper.GetString("log.dial"),
 			getPriority(viper.GetString("log.priority")),
 			viper.GetString("log.tag"))
 
