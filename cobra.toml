@@ -64,6 +64,7 @@ import (
 {{- if .Viper }}
     "log/syslog"
     "strings"
+	"github.com/fsnotify/fsnotify"
     lSyslog "github.com/sirupsen/logrus/hooks/syslog"
 	"github.com/soellman/pidfile"
 	"github.com/spf13/viper"
@@ -238,12 +239,13 @@ func initConfig() {
 		}
 	}
 
+{{- if .Viper }}
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		logrus.WithFields(logrus.Fields{
 			"file": e.Name,
 		}).Info("config file changed")
-	})
+	}){{ end }}
 }
 {{- end }}
 """
